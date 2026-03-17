@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Herbal Garden Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        #voice-btn {
+            padding: 10px 12px;
+            background: #2a9d8f;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #voice-btn:hover {
+            background-color: #21867a;
+            transform: scale(1.05);
+        }
+        #voice-btn.listening {
+            background-color: #e63946;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .input-area {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="chat-card">
+            <h1 class="chat-title">🌿 Herbal Garden Assistant</h1>
+            <div class="bot-image">
+                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Herbal Garden Logo" class="bot-gif">
+            </div>
+
+            <div id="chat-box" class="chat-box"></div>
+
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="Ask about any herb..." autocomplete="off">
+                <button id="voice-btn" type="button" title="Speak to ask">🎤</button>
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            <p><a href="{{ url_for('home') }}">Go back to home page</a></p>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById("chat-box");
+
+        // Function to add message to the chat box
+        function addMessage(role, message) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = role;
+            messageDiv.innerHTML = message;
+            chatBox.appendChild(messageDiv);
+
+            let i = 0;
+            const typing = setInterval(() => {
+                if (i < message.length) {
+                    messageDiv.innerHTML = message.substring(0, i);
+                    i++;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } else {
+                    clearInterval(typing);
+                    messageDiv.innerHTML = message;
+                }
+            }, 5);
+        }
+
+        // Function to send a message and get a response from the chatbot
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage("user", message);
+            input.value = "";
+
+            try {
+                const response = await axios.post("/chat", { message });
+                let reply = response.data.reply;
+                reply = reply.replace(/\b([A-Z][a-z]*)\b/g, "<strong>$1</strong>");
+                addMessage("bot", reply);
+            } catch (error) {
+                addMessage("bot", "Oops! Something went wrong.");
+            }
+        }
+
+        // Voice recognition for chatbot input
+        document.addEventListener('DOMContentLoaded', function() {
+            const voiceBtn = document.getElementById('voice-btn');
+            const userInput = document.getElementById('user-input');
+            if (voiceBtn && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                voiceBtn.addEventListener('click', function() {
+                    recognition.start();
+                    voiceBtn.classList.add('listening');
+                    voiceBtn.textContent = '🔴';
+                });
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                    voiceBtn.classList.remove('listening');
+                    voiceBtn.textContent = '🎤';
+                    // Optionally send message automatically:
+                    // setTimeout(() => sendMessage(), 500);
+                };
+                recognition.onerror = function(event) {
+                    voiceBtn.classList.remove('listening');
+                    voiceBtn.textContent = '🎤';
+                    alert('Voice recognition failed. Please try again or type your message.');
+                };
+                recognition.onend = function() {
+                    voiceBtn.classList.remove('listening');
+                    voiceBtn.textContent = '🎤';
+                };
+            } else {
+                voiceBtn.style.display = 'none';
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      // Symptom detection for chat - add this after your existing chat scripts
+      document.addEventListener('DOMContentLoaded', function() {
+        // Map symptom keywords to symptom IDs (must match your DB)
+        const symptomKeywords = {
+          'headache': 1,
+          'head pain': 1,
+          'migraine': 1,
+          'cough': 2,
+          'coughing': 2,
+          'fever': 3,
+          'high temperature': 3,
+          'sore throat': 4,
+          'throat pain': 4,
+          'insomnia': 5,
+          'can\'t sleep': 5,
+          'trouble sleeping': 5,
+          'anxiety': 6,
+          'anxious': 6,
+          'nervous': 6,
+          'digestive': 7,
+          'stomach': 7,
+          'indigestion': 7,
+          'bloating': 7,
+          'joint pain': 8,
+          'arthritis': 8,
+          'painful joints': 8
+        };
+    
+        // Override or define sendMessage for chat input
+        window.sendMessage = function() {
+          const userInput = document.getElementById('user-input');
+          const message = userInput.value.trim();
+          if (!message) return;
+    
+          // Check if message seems to be describing symptoms
+          const symptomPhrases = ['symptom', 'feel', 'suffering', 'pain', 'having', 'experiencing', 'help with'];
+          const isSymptomQuery = symptomPhrases.some(phrase => message.toLowerCase().includes(phrase));
+    
+          // Add user message to chat (assumes addMessage exists)
+          if (typeof addMessage === "function") addMessage("user", message);
+          userInput.value = "";
+    
+          // If likely describing symptoms, process for symptom detection
+          if (isSymptomQuery) {
+            // Extract symptoms from message
+            const extractedSymptoms = [];
+            for (const [keyword, id] of Object.entries(symptomKeywords)) {
+              if (message.toLowerCase().includes(keyword)) {
+                if (!extractedSymptoms.includes(id)) {
+                  extractedSymptoms.push(id);
+                }
+              }
+            }
+    
+            if (extractedSymptoms.length > 0) {
+              // Add a response message to the chat
+              if (typeof addMessage === "function") {
+                addMessage("bot", "I notice you're describing some symptoms. Let me help you find herbal recommendations for these issues...");
+              }
+    
+              // Wait a moment before redirecting (to show the message)
+              setTimeout(() => {
+                // Create a form to submit the symptoms
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/recommend';
+                form.style.display = 'none';
+    
+                for (const symptomId of extractedSymptoms) {
+                  const input = document.createElement('input');
+                  input.type = 'checkbox';
+                  input.name = 'symptoms';
+                  input.value = symptomId;
+                  input.checked = true;
+                  form.appendChild(input);
+                }
+    
+                document.body.appendChild(form);
+                form.submit();
+              }, 1500);
+    
+              return;
+            }
+          }
+    
+          // If not a symptom query or no symptoms found, proceed with normal chat
+          axios.post("/chat", { message: message })
+            .then(response => {
+              let reply = response.data.reply;
+              if (typeof addMessage === "function") addMessage("bot", reply);
+            })
+            .catch(error => {
+              console.error("Error:", error);
+              if (typeof addMessage === "function") addMessage("bot", "Sorry, I encountered an error processing your request.");
+            });
+        };
+      });
+    </script>
+    
+</body>
+</html>

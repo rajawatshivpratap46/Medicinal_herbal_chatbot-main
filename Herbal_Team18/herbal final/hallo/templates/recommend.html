@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herbal Recommendations - LearnHerbs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style2.css') }}">
+    <style>
+        body {
+            background: url('/static/images/search_bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #43a047;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .symptoms-form {
+            margin-bottom: 30px;
+        }
+        .symptoms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .symptom-checkbox {
+            background: #f1f8e9;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .symptom-checkbox:hover {
+            background: #e8f5e9;
+        }
+        .symptom-checkbox input {
+            margin-right: 10px;
+        }
+        .submit-btn {
+            background: linear-gradient(90deg, #43a047 60%, #8bc34a 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: all 0.3s;
+        }
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .recommendations {
+            margin-top: 40px;
+        }
+        .herb-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+        }
+        .herb-image {
+            flex: 0 0 150px;
+            background-color: #e0f2f1;
+        }
+        .herb-image img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .herb-details {
+            flex: 1;
+            padding: 20px;
+        }
+        .herb-name {
+            color: #2e7d32;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .effectiveness {
+            display: inline-block;
+            background-color: #43a047;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: block;
+            text-align: center;
+            color: #43a047;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Get Personalized Herbal Recommendations</h1>
+        
+        <form class="symptoms-form" method="POST" action="{{ url_for('recommend') }}">
+            <h3>Select your symptoms (choose all that apply):</h3>
+            
+            <div class="symptoms-grid">
+                {% for symptom in symptoms %}
+                <label class="symptom-checkbox">
+                    <input type="checkbox" name="symptoms" value="{{ symptom.symptom_id }}">
+                    {{ symptom.symptom_name }}
+                </label>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="submit-btn">Get Recommendations</button>
+        </form>
+        
+        {% if recommendations %}
+        <div class="recommendations">
+            <h2>Recommended Herbs for Your Symptoms</h2>
+            
+            {% for herb in recommendations %}
+            <div class="herb-card">
+                <div class="herb-image">
+                    {% if herb.image_path %}
+                    <img src="{{ url_for('static', filename=herb.image_path.replace('/static/', '')) }}" alt="{{ herb.name }}">
+                    {% else %}
+                    <div style="height: 150px; background: #e0f2f1; display: flex; align-items: center; justify-content: center;">
+                        <span>No image</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="herb-details">
+                    <h3 class="herb-name">{{ herb.name }}</h3>
+                    <div class="effectiveness">Effectiveness: {{ (herb.avg_effectiveness * 100)|int }}%</div>
+                    <p><strong>Scientific Name:</strong> <em>{{ herb.scientific_name }}</em></p>
+                    <p><strong>Helps with:</strong> {{ herb.matched_symptoms }}</p>
+                    <p><strong>Benefits:</strong> {{ herb.benefits }}</p>
+                    <p><strong>Usage:</strong> {{ herb.usage }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <a href="{{ url_for('home') }}" class="back-btn">Go back to home page</a>
+    </div>
+</body>
+</html>

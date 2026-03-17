@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Symptoms</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style2.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(67,160,71,0.70), rgba(67,160,71,0.70)),
+                url('/static/images/herbal_bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #43a047;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            background: linear-gradient(90deg, #43a047 60%, #8bc34a 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            background-color: #f44336;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .nav-links a {
+            color: #43a047;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Symptom Tracker for {{ username }}</h1>
+        
+        <form method="POST" action="{{ url_for('symptom_tracker', username=username) }}">
+            <div class="form-group">
+                <label for="symptom_name">Symptom</label>
+                <select id="symptom_name" name="symptom_name" required>
+                    <option value="">Select a symptom</option>
+                    <option value="Headache">Headache</option>
+                    <option value="Cough">Cough</option>
+                    <option value="Fever">Fever</option>
+                    <option value="Sore Throat">Sore Throat</option>
+                    <option value="Insomnia">Insomnia</option>
+                    <option value="Anxiety">Anxiety</option>
+                    <option value="Digestive Issues">Digestive Issues</option>
+                    <option value="Joint Pain">Joint Pain</option>
+                    <option value="Other">Other (specify in notes)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="severity">Severity (1-10)</label>
+                <input type="range" id="severity" name="severity" min="1" max="10" value="5">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Mild</span>
+                    <span>Moderate</span>
+                    <span>Severe</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Notes (optional)</label>
+                <textarea id="notes" name="notes" rows="3"></textarea>
+            </div>
+            
+            <button type="submit">Record Symptom</button>
+        </form>
+        
+        <h2>Recent Symptom History</h2>
+        {% if symptoms %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Symptom</th>
+                        <th>Severity</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for symptom in symptoms %}
+                    <tr>
+                        <td>{{ symptom.date_recorded }}</td>
+                        <td>{{ symptom.symptom_name }}</td>
+                        <td><span class="severity-badge">{{ symptom.severity }}/10</span></td>
+                        <td>{{ symptom.notes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No symptoms recorded yet.</p>
+        {% endif %}
+        
+        <div class="nav-links">
+            <a href="{{ url_for('herb_journal', username=username) }}">My Herb Journal</a>
+            <a href="{{ url_for('health_dashboard', username=username) }}">View Health Dashboard</a>
+            <a href="{{ url_for('home') }}">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

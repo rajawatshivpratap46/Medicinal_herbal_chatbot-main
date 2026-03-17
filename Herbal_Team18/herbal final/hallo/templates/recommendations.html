@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herbal Recommendations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style2.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(67,160,71,0.70), rgba(67,160,71,0.70)),
+                url('/static/images/herbal_bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #43a047;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .herb-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .herb-card-body {
+            padding: 20px;
+        }
+        .herb-card h3 {
+            color: #43a047;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .effectiveness-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            background-color: #43a047;
+            margin-bottom: 15px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .nav-links a {
+            color: #43a047;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .add-to-journal {
+            display: inline-block;
+            background-color: #43a047;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            text-decoration: none;
+        }
+        .add-to-journal:hover {
+            background-color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recommended Herbs for "{{ symptom }}"</h1>
+        
+        {% if recommendations %}
+            <div class="recommendations">
+                {% for herb in recommendations %}
+                <div class="herb-card">
+                    <div class="herb-card-body">
+                        <h3>{{ herb.name }}</h3>
+                        <span class="effectiveness-badge">{{ (herb.effectiveness * 10)|int }}% Effective</span>
+                        <p><strong>How to use:</strong> {{ herb.herb_usage }}</p>
+                        <a href="{{ url_for('herb_journal', username=username) }}" class="add-to-journal">Add to My Journal</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No specific recommendations found for this symptom.</p>
+        {% endif %}
+        
+        <div class="nav-links">
+            <a href="{{ url_for('symptom_tracker', username=username) }}">Back to Symptoms</a>
+            <a href="{{ url_for('herb_journal', username=username) }}">My Herb Journal</a>
+            <a href="{{ url_for('health_dashboard', username=username) }}">Health Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

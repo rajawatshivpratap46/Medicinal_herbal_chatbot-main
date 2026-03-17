@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style2.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(67,160,71,0.70), rgba(67,160,71,0.70)),
+                url('/static/images/herbal_bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #43a047;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .dashboard-card-header {
+            background: #43a047;
+            color: white;
+            padding: 15px 20px;
+        }
+        .dashboard-card-header h3 {
+            margin: 0;
+            color: white;
+        }
+        .dashboard-card-body {
+            padding: 20px;
+        }
+        .list-group {
+            list-style: none;
+            padding: 0;
+        }
+        .list-group-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-primary {
+            background-color: #2196f3;
+        }
+        .badge-success {
+            background-color: #43a047;
+        }
+        .user-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .user-info-row {
+            margin-bottom: 10px;
+        }
+        .user-info-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .nav-links a {
+            color: #43a047;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Health Dashboard for {{ username }}</h1>
+        
+        <div class="user-info">
+            <div class="user-info-row">
+                <span class="user-info-label">Username:</span>
+                <span>{{ username }}</span>
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">Email:</span>
+                <span>{{ user.email }}</span>
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">Allergies:</span>
+                <span>{{ user.allergies or 'None' }}</span>
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">Diet Preference:</span>
+                <span>{{ user.diet_preference or 'None' }}</span>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h3>Recent Symptoms</h3>
+                </div>
+                <div class="dashboard-card-body">
+                    {% if symptoms %}
+                        <ul class="list-group">
+                            {% for symptom in symptoms %}
+                            <li class="list-group-item">
+                                {{ symptom.symptom_name }}
+                                <span class="badge badge-primary">{{ symptom.severity }}/10</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No symptoms recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h3>Most Effective Herbs</h3>
+                </div>
+                <div class="dashboard-card-body">
+                    {% if herbs %}
+                        <ul class="list-group">
+                            {% for herb in herbs %}
+                            <li class="list-group-item">
+                                {{ herb.herb_name }}
+                                <span class="badge badge-success">{{ herb.avg_effectiveness|float|round(1) }}/10</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No herbs recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-links">
+            <a href="{{ url_for('symptom_tracker', username=username) }}">Track New Symptom</a>
+            <a href="{{ url_for('herb_journal', username=username) }}">My Herb Journal</a>
+            <a href="{{ url_for('home') }}">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

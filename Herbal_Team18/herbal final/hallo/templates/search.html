@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LearnHerbs Search</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style2.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      background: url('/static/images/search_bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+    }
+    .container {
+      margin: 40px auto 0 auto;
+      max-width: 1300px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px;
+      box-shadow: 0 8px 40px rgba(67,160,71,0.13);
+      padding: 40px 30px 30px 30px;
+    }
+    /* Centered search bar */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+      width: 100%;
+    }
+    .search-container form {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+    }
+    .search-box {
+      flex: 1;
+      padding: 15px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 30px 0 0 30px;
+      outline: none;
+      background-color: #fff;
+      color: #333;
+    }
+    .search-button {
+      padding: 15px 30px;
+      background: #43a047;
+      color: white;
+      border: none;
+      border-radius: 0 30px 30px 0;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    /* Voice search button */
+    .voice-button {
+      padding: 15px 20px;
+      background: #43a047;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+    .voice-button:hover {
+      background: #2e7d32;
+      transform: scale(1.05);
+    }
+    .voice-button.listening {
+      background: #f44336;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    /* Card Grid */
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      height: 350px;
+      display: flex;
+      flex-direction: column;
+    }
+    .card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+    }
+    .card-content {
+      background: #4CAF50;
+      color: white;
+      padding: 15px;
+      flex: 1;
+    }
+    .card-content h3 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .card-content p {
+      margin: 5px 0;
+    }
+    .no-results {
+      text-align: center;
+      color: #2e7d32;
+      padding: 40px 0;
+    }
+    /* Floating Herb Map Button */
+    .herb-map-fab {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(90deg, #43a047 60%, #8bc34a 100%);
+      color: white;
+      padding: 18px 30px;
+      border-radius: 30px;
+      box-shadow: 0 8px 30px rgba(67,160,71,0.25);
+      font-size: 1.25rem;
+      font-weight: bold;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 10000;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .herb-map-fab:hover {
+      background: linear-gradient(90deg, #388e3c 60%, #689f38 100%);
+      transform: scale(1.07);
+      text-decoration: none;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Centered Search Bar with Voice Button -->
+    <div class="search-container">
+      <form method="POST" action="/search">
+        <input type="text" name="search" class="search-box" placeholder="Search any herbal remedy..." required>
+        <button type="submit" class="search-button">Search</button>
+        <button type="button" id="voice-btn" class="voice-button" title="Speak to search">🎤</button>
+      </form>
+    </div>
+
+    <!-- Herb Cards Grid -->
+    <div class="card-container">
+      {% if results %}
+        {% for result in results %}
+          <div class="card">
+            {% if result['image_path'] %}
+              <img src="{{ url_for('static', filename='images/' + result['image_path'].split('/')[-1]) }}" alt="{{ result['name'] }}">
+            {% else %}
+              <img src="{{ url_for('static', filename='images/default_herb.jpg') }}" alt="No image available">
+            {% endif %}
+            <div class="card-content">
+              <h3>{{ result['name'] }}</h3>
+              <p><strong>Medicinal Plants:</strong> {{ result['plants'] }}</p>
+              <p><strong>Natural Excipients:</strong> {{ result['excipients'] }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="no-results">
+          <p>Sorry, we couldn't find any results for "<strong>{{ request.form.get('search', '') }}</strong>".</p>
+          <p>Try searching for another herb, or check your spelling.</p>
+          <p>Popular herbs: Aloe Vera, Ginger, Turmeric, Tulsi, Amla</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Floating Herb Map Button -->
+  <a href="{{ url_for('herbal_map') }}" class="herb-map-fab" title="Show Herb Map">
+    <span>🗺️ Herb Map</span>
+  </a>
+
+  <!-- Voice Recognition Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const voiceBtn = document.getElementById('voice-btn');
+      const searchBox = document.querySelector('.search-box');
+      
+      // Check if browser supports speech recognition
+      if (voiceBtn && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        // Initialize speech recognition
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        // When microphone button is clicked
+        voiceBtn.addEventListener('click', function() {
+          recognition.start();
+          voiceBtn.classList.add('listening');
+          voiceBtn.textContent = '🔴';
+        });
+        
+        // When speech is recognized
+        recognition.onresult = function(event) {
+          const transcript = event.results[0][0].transcript;
+          searchBox.value = transcript;
+          voiceBtn.classList.remove('listening');
+          voiceBtn.textContent = '🎤';
+          
+          // Automatically submit the form after speech recognition
+          setTimeout(() => {
+            searchBox.form.submit();
+          }, 500);
+        };
+        
+        // Handle errors
+        recognition.onerror = function(event) {
+          console.error('Speech recognition error:', event.error);
+          voiceBtn.classList.remove('listening');
+          voiceBtn.textContent = '🎤';
+          alert('Voice recognition failed. Please try again or type your search.');
+        };
+        
+        // When recognition ends
+        recognition.onend = function() {
+          voiceBtn.classList.remove('listening');
+          voiceBtn.textContent = '🎤';
+        };
+      } else {
+        // Browser doesn't support speech recognition
+        voiceBtn.style.display = 'none';
+        console.log('This browser does not support speech recognition.');
+      }
+    });
+  </script>
+</body>
+</html>

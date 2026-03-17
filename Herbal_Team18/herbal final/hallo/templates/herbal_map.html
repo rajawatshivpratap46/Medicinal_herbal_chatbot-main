@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herbal Garden Map</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+  <style>
+    #map-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+    }
+    #search-panel {
+      padding: 16px;
+      background: rgba(1, 68, 33, 0.95);
+      color: white;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    #herb-search {
+      flex-grow: 1;
+      padding: 12px;
+      border-radius: 25px;
+      border: none;
+      font-size: 16px;
+    }
+    #search-button, #locate-me {
+      padding: 12px 20px;
+      background: #2a9d8f;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    #search-button:hover, #locate-me:hover {
+      background: #21867a;
+    }
+    #map {
+      flex-grow: 1;
+      width: 100%;
+      height: 100%;
+    }
+    .info-window {
+      padding: 5px;
+      max-width: 300px;
+    }
+    .info-window h3 {
+      color: #2e7d32;
+      margin-top: 0;
+    }
+    .info-window img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    .herb-tag {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-right: 5px;
+      font-size: 12px;
+    }
+    #radius-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #search-radius {
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+    }
+    .back-link {
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="map-container">
+    <div id="search-panel">
+      <a href="{{ url_for('home') }}" class="back-link">
+        <span>← Back</span>
+      </a>
+      <input type="text" id="herb-search" placeholder="Search for herb locations or herbal stores...">
+      <div id="radius-selector">
+        <label for="search-radius">Radius:</label>
+        <select id="search-radius">
+          <option value="1000">1 km</option>
+          <option value="5000" selected>5 km</option>
+          <option value="10000">10 km</option>
+          <option value="20000">20 km</option>
+        </select>
+      </div>
+      <button id="search-button">Search</button>
+      <button id="locate-me">Near Me</button>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <script>
+    // Herbal data with locations and details
+    const herbalData = [
+      {
+        name: "Beetroot",
+        latinName: "Beta vulgaris",
+        locations: [
+          { lat: 51.5074, lng: -0.1278, type: "store", name: "London Herbal Garden" },
+          { lat: 40.7128, lng: -74.0060, type: "store", name: "NYC Herbal Market" },
+          { lat: 48.8566, lng: 2.3522, type: "farm", name: "Paris Organic Farm" }
+        ],
+        image: "/static/images/Beetroot herb image - Copy.jpeg",
+        uses: "Blood pressure, inflammation, liver health",
+        availability: "Year-round in stores, summer and fall for fresh"
+      },
+      {
+        name: "Tulsi",
+        latinName: "Ocimum sanctum",
+        locations: [
+          { lat: 28.6139, lng: 77.2090, type: "natural", name: "Delhi Herbal Garden" },
+          { lat: 19.0760, lng: 72.8777, type: "store", name: "Mumbai Ayurvedic Shop" },
+          { lat: 22.5726, lng: 88.3639, type: "farm", name: "Kolkata Herb Farm" }
+        ],
+        image: "/static/images/tulsi.png",
+        uses: "Adaptogen, stress relief, respiratory health",
+        availability: "Year-round in tropical areas, seasonal elsewhere"
+      },
+      {
+        name: "Aloe Vera",
+        latinName: "Aloe barbadensis miller",
+        locations: [
+          { lat: 33.4484, lng: -112.0740, type: "natural", name: "Phoenix Desert Garden" },
+          { lat: 25.7617, lng: -80.1918, type: "farm", name: "Miami Aloe Farm" },
+          { lat: 36.1699, lng: -115.1398, type: "store", name: "Las Vegas Herbal Center" }
+        ],
+        image: "/static/images/aloe-vera.jpg",
+        uses: "Skin healing, digestive health, burn treatment",
+        availability: "Year-round as houseplant or in warm climates"
+      },
+      {
+        name: "Turmeric",
+        latinName: "Curcuma longa",
+        locations: [
+          { lat: 13.0827, lng: 80.2707, type: "farm", name: "Chennai Spice Garden" },
+          { lat: 17.3850, lng: 78.4867, type: "store", name: "Hyderabad Herb Market" },
+          { lat: 23.8103, lng: 90.4125, type: "natural", name: "Dhaka Botanical Garden" }
+        ],
+        image: "/static/images/Turmeric herb image.jpeg",
+        uses: "Anti-inflammatory, antioxidant, joint health",
+        availability: "Year-round as powder, seasonal for fresh root"
+      },
+      {
+        name: "Chamomile",
+        latinName: "Matricaria chamomilla",
+        locations: [
+          { lat: 52.5200, lng: 13.4050, type: "farm", name: "Berlin Herb Farm" },
+          { lat: 48.2082, lng: 16.3738, type: "store", name: "Vienna Herbal Apothecary" },
+          { lat: 50.0755, lng: 14.4378, type: "natural", name: "Prague Medicinal Garden" }
+        ],
+        image: "/static/images/chamomile herb image.jpeg",
+        uses: "Sleep aid, anxiety relief, digestive comfort",
+        availability: "Spring and summer for fresh flowers, year-round dried"
+      }
+    ];
+
+    let markers = [];
+    let map;
+    let infoWindow;
+    let currentPosition;
+
+    function initMap() {
+      const defaultLocation = { lat: 51.5074, lng: -0.1278 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: defaultLocation,
+        zoom: 10,
+        mapTypeId: "roadmap",
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+        },
+        styles: [
+          {
+            featureType: "poi.park",
+            elementType: "geometry",
+            stylers: [{ color: "#c8e6c9" }]
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#b2dfdb" }]
+          }
+        ]
+      });
+      infoWindow = new google.maps.InfoWindow();
+      document.getElementById("search-button").addEventListener("click", searchHerbs);
+      document.getElementById("locate-me").addEventListener("click", locateUser);
+      document.getElementById("herb-search").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          searchHerbs();
+        }
+      });
+      showAllHerbs();
+    }
+
+    function showAllHerbs() {
+      clearMarkers();
+      herbalData.forEach(herb => {
+        herb.locations.forEach(location => {
+          addMarker(location.lat, location.lng, herb, location);
+        });
+      });
+      if (markers.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        markers.forEach(marker => bounds.extend(marker.getPosition()));
+        map.fitBounds(bounds);
+      }
+    }
+
+    function addMarker(lat, lng, herb, locationInfo) {
+      let iconUrl;
+      switch(locationInfo.type) {
+        case "store":
+          iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+          break;
+        case "farm":
+          iconUrl = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+          break;
+        case "natural":
+          iconUrl = "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+          break;
+        default:
+          iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+      }
+      const marker = new google.maps.Marker({
+        position: { lat, lng },
+        map: map,
+        title: herb.name,
+        icon: {
+          url: iconUrl,
+          scaledSize: new google.maps.Size(30, 30)
+        },
+        animation: google.maps.Animation.DROP
+      });
+      const contentString = `
+        <div class="info-window">
+          <h3>${herb.name} (${herb.latinName})</h3>
+          <img src="${herb.image}" alt="${herb.name}">
+          <p><strong>Location:</strong> ${locationInfo.name}</p>
+          <p><strong>Type:</strong> <span class="herb-tag">${locationInfo.type}</span></p>
+          <p><strong>Medicinal Uses:</strong> ${herb.uses}</p>
+          <p><strong>Availability:</strong> ${herb.availability}</p>
+          <button onclick="getDirections(${lat}, ${lng})" style="background:#2a9d8f; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Get Directions</button>
+        </div>
+      `;
+      marker.addListener("click", () => {
+        infoWindow.setContent(contentString);
+        infoWindow.open(map, marker);
+      });
+      markers.push(marker);
+      return marker;
+    }
+
+    function clearMarkers() {
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+    }
+
+    function searchHerbs() {
+      const searchTerm = document.getElementById("herb-search").value.toLowerCase();
+      if (!searchTerm) {
+        showAllHerbs();
+        return;
+      }
+      clearMarkers();
+      const matchingHerbs = herbalData.filter(herb => 
+        herb.name.toLowerCase().includes(searchTerm) || 
+        herb.latinName.toLowerCase().includes(searchTerm) ||
+        herb.uses.toLowerCase().includes(searchTerm)
+      );
+      if (matchingHerbs.length === 0) {
+        searchNearbyHerbalStores(searchTerm);
+      } else {
+        matchingHerbs.forEach(herb => {
+          herb.locations.forEach(location => {
+            addMarker(location.lat, location.lng, herb, location);
+          });
+        });
+        if (markers.length > 0) {
+          const bounds = new google.maps.LatLngBounds();
+          markers.forEach(marker => bounds.extend(marker.getPosition()));
+          map.fitBounds(bounds);
+        }
+      }
+    }
+
+    function locateUser() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            currentPosition = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            map.setCenter(currentPosition);
+            map.setZoom(12);
+            new google.maps.Marker({
+              position: currentPosition,
+              map: map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#4285F4",
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 2
+              },
+              title: "Your Location"
+            });
+            searchNearbyHerbalStores();
+          },
+          () => {
+            alert("Error: The Geolocation service failed.");
+          }
+        );
+      } else {
+        alert("Error: Your browser doesn't support geolocation.");
+      }
+    }
+
+    function searchNearbyHerbalStores(searchTerm) {
+      const radius = parseInt(document.getElementById("search-radius").value);
+      simulateNearbyStores(searchTerm, radius);
+    }
+
+    function simulateNearbyStores(searchTerm, radius) {
+      const center = currentPosition || map.getCenter();
+      clearMarkers();
+      for (let i = 0; i < 5; i++) {
+        const offsetLat = (Math.random() - 0.5) * radius/50000;
+        const offsetLng = (Math.random() - 0.5) * radius/50000;
+        const position = {
+          lat: center.lat + offsetLat,
+          lng: center.lng + offsetLng
+        };
+        const randomHerb = herbalData[Math.floor(Math.random() * herbalData.length)];
+        const storeInfo = {
+          type: "store",
+          name: `${getRandomStoreName()} Herbal Shop`
+        };
+        addMarker(position.lat, position.lng, randomHerb, storeInfo);
+      }
+      const bounds = new google.maps.LatLngBounds();
+      markers.forEach(marker => bounds.extend(marker.getPosition()));
+      map.fitBounds(bounds);
+    }
+
+    function getDirections(lat, lng) {
+      const destination = `${lat},${lng}`;
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+      window.open(url, '_blank');
+    }
+
+    function getRandomStoreName() {
+      const prefixes = ["Nature's", "Green", "Herbal", "Garden", "Organic", "Healing", "Botanical", "Earth's"];
+      const suffixes = ["Remedies", "Corner", "Path", "Haven", "Essence", "Bounty", "Roots", "Bloom"];
+      const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+      return `${prefix} ${suffix}`;
+    }
+  </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj51t3g6Ym46-9bVCWybzGJQqNIQUn4LU&libraries=places&callback=initMap">
+  </script>
+</body>
+</html>
