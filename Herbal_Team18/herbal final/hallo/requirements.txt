@@ -11,3 +11,4 @@ Pillow==9.4.0
 mysql-connector-python==8.0.32
 python-dotenv==1.0.0
 >>>>>>> 2f643665ff2ea095b3b978e8517d08f667d854b2
+gunicorn==21.2.0
