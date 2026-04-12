@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 Flask==2.2.3
 requests==2.28.2
 Pillow==9.4.0
 mysql-connector-python==8.0.32
 python-dotenv==1.0.0
+=======
+Flask==2.2.3
+requests==2.28.2
+Pillow==9.4.0
+mysql-connector-python==8.0.32
+python-dotenv==1.0.0
+>>>>>>> 2f643665ff2ea095b3b978e8517d08f667d854b2
